@@ -23,7 +23,7 @@ const ItemDetails = () => {
     setValue(newValue);
   };
   async function getItem() {
-    // SUBSTITUÍDO: http://localhost:2000 => http://localhost:1337
+   
     const item = await fetch(
       `http://localhost:1337/api/items/${itemId}?populate=image`,
       {

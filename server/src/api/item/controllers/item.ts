@@ -1,9 +1,7 @@
-
-
 /**
  * item controller
  */
 
-const { createCoreController } = require("@strapi/strapi").factories;
+import { factories } from '@strapi/strapi'
 
-module.exports = createCoreController("api::item.item");
+export default factories.createCoreController('api::item.item');

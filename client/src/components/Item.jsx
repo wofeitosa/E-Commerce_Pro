@@ -7,7 +7,7 @@ import { shades } from "../theme";
 import { addToCart } from "../state";
 import { useNavigate } from "react-router-dom";
 
-const Item = ({ item, width }) => {
+const Item = ({ item }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [count, setCount] = useState(1);
@@ -17,34 +17,32 @@ const Item = ({ item, width }) => {
     palette: { neutral },
   } = useTheme();
 
-  // Extrai as propriedades do item
-  const { category, price, name, image } = item?.attributes || {};
+  const { attributes } = item || {};
+  const { category, price, name, image } = attributes || {};
+  
+  // Corrigindo o acesso à URL da imagem
+  const imageUrl = image?.data?.attributes?.formats?.medium?.url || image?.data?.attributes?.url;
 
-  // Caso precise tratar quando não houver 'image' ou 'url'
-  // Certifique-se de que 'image?.data?.attributes' exista
-  const url =
-    image?.data?.attributes?.formats?.medium?.url ||
-    "/assets/strapi-images/ahmed-carter-tiWcNvpQF4E-unsplash.jpg"; // Se quiser uma imagem fallback
+  if (!item || !attributes) return null;
 
   return (
-    <Box width={width}>
-      {/* Container que controla o hover */}
+    <Box width="100%">
       <Box
         position="relative"
         onMouseOver={() => setIsHovered(true)}
         onMouseOut={() => setIsHovered(false)}
       >
-        {/* Imagem do produto */}
-        <img
-          alt={name}
-          width="300px"
-          height="400px"
-          src={`http://localhost:1337${url}`}
-          style={{ cursor: "pointer" }}
-          onClick={() => navigate(`/item/${item.id}`)}
-        />
+        {imageUrl && (
+          <img
+            alt={name}
+            width="300px"
+            height="400px"
+            src={`http://localhost:1337${imageUrl}`}
+            onClick={() => navigate(`/item/${item.id}`)}
+            style={{ cursor: "pointer", objectFit: "cover" }}
+          />
+        )}
 
-        {/* Opções de adicionar ao carrinho, só aparecem em hover */}
         <Box
           display={isHovered ? "block" : "none"}
           position="absolute"
@@ -54,7 +52,6 @@ const Item = ({ item, width }) => {
           padding="0 5%"
         >
           <Box display="flex" justifyContent="space-between">
-            {/* Contador */}
             <Box
               display="flex"
               alignItems="center"
@@ -70,12 +67,13 @@ const Item = ({ item, width }) => {
               </IconButton>
             </Box>
 
-            {/* Botão de Add to Cart */}
             <Button
-              onClick={() =>
-                dispatch(addToCart({ item: { ...item, count } }))
-              }
-              sx={{ backgroundColor: shades.primary[300], color: "white" }}
+              onClick={() => dispatch(addToCart({ item: { ...item, count } }))}
+              sx={{ 
+                backgroundColor: shades.primary[300], 
+                color: "white",
+                "&:hover": { backgroundColor: shades.primary[400] }
+              }}
             >
               Add to Cart
             </Button>
@@ -83,18 +81,15 @@ const Item = ({ item, width }) => {
         </Box>
       </Box>
 
-      {/* Informações do produto */}
       <Box mt="3px">
         <Typography variant="subtitle2" color={neutral.dark}>
-          {category
-            ?.replace(/([A-Z])/g, " $1")
-            ?.replace(/^./, (str) => str.toUpperCase())}
+          {category?.replace(/([A-Z])/g, " $1")?.replace(/^./, (str) => str.toUpperCase())}
         </Typography>
         <Typography>{name}</Typography>
-        <Typography fontWeight="bold">${price}</Typography>
+        <Typography fontWeight="bold">${price?.toFixed(2)}</Typography>
       </Box>
     </Box>
   );
 };
 
-export default Item;
+export default Item; 

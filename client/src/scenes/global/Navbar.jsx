@@ -10,10 +10,9 @@ import { useNavigate } from "react-router-dom";
 import { shades } from "../../theme";
 import { setIsCartOpen } from "../../state";
 
-
 function Navbar() {
   const navigate = useNavigate();
-  const dispatch = useDispatch(); 
+  const dispatch = useDispatch();
   const cart = useSelector((state) => state.cart.cart);
 
   return (
@@ -41,14 +40,10 @@ function Navbar() {
           sx={{ "&:hover": { cursor: "pointer" } }}
           color={shades.secondary[500]}
         >
-          SHOPPING
+          ECOMMER
         </Box>
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          columnGap="20px"
-          zIndex="2"
-        >
+
+        <Box display="flex" justifyContent="space-between" columnGap="20px" zIndex="2">
           <IconButton sx={{ color: "black" }}>
             <SearchOutlined />
           </IconButton>
@@ -71,7 +66,8 @@ function Navbar() {
           >
             <IconButton
               onClick={() => dispatch(setIsCartOpen({}))}
-              sx={{ color: "black"}}>
+              sx={{ color: "black" }}
+            >
               <ShoppingBagOutlined />
             </IconButton>
           </Badge>

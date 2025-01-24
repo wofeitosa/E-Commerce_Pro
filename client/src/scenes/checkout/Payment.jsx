@@ -1,10 +1,8 @@
-import { Box, Typography } from "@mui/material";
-import TextField from "@mui/material/TextField";
+import { Box, Typography, TextField } from "@mui/material";
 
 const Payment = ({ values, touched, errors, handleBlur, handleChange }) => {
   return (
     <Box m="30px 0">
-      {/* CONTACT INFO */}
       <Box>
         <Typography sx={{ mb: "15px" }} fontSize="18px">
           Contact Info

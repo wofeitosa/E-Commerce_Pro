@@ -1,5 +1,7 @@
+"use strict";
 /**
  * item controller
  */
-const { createCoreController } = require("@strapi/strapi").factories;
-module.exports = createCoreController("api::item.item");
+Object.defineProperty(exports, "__esModule", { value: true });
+const strapi_1 = require("@strapi/strapi");
+exports.default = strapi_1.factories.createCoreController('api::item.item');

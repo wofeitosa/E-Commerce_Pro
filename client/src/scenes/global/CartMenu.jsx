@@ -25,11 +25,10 @@ const CartMenu = () => {
   const cart = useSelector((state) => state.cart.cart);
   const isCartOpen = useSelector((state) => state.cart.isCartOpen);
 
-  // Calcular total (usar item.price ao invés de item.attributes.price)
-  const totalPrice = cart.reduce((total, item) => {
-    // item.price deve existir, fallback se precisar
-    const price = item.price || 0;
-    return total + (item.count || 1) * price;
+  // Se o price vem diretamente de item
+  const totalPrice = cart.reduce((acc, item) => {
+    const itemPrice = item.price || 0;
+    return acc + item.count * itemPrice;
   }, 0);
 
   return (
@@ -53,35 +52,31 @@ const CartMenu = () => {
         backgroundColor="white"
       >
         <Box padding="30px" overflow="auto" height="100%">
-          {/* HEADER */}
           <FlexBox mb="15px">
-            <Typography variant="h3">
-              SHOPPING BAG ({cart.length})
-            </Typography>
+            <Typography variant="h3">SHOPPING BAG ({cart.length})</Typography>
             <IconButton onClick={() => dispatch(setIsCartOpen({}))}>
               <CloseIcon />
             </IconButton>
           </FlexBox>
 
-          {/* CART LIST */}
           <Box>
             {cart.map((item) => (
-              <Box key={`${item.name}-${item.id}`}>
+              <Box key={`${item.id}-${item.name}`}>
                 <FlexBox p="15px 0">
                   <Box flex="1 1 40%">
-                  <img
-                   alt={item?.name}
-                   width="123px"
-                   height="164px"
-                   src={`http://localhost:1337${item?.attributes?.image?.data?.attributes?.formats?.medium?.url}`}
-                   />;
-
+                    {item?.attributes?.image && (
+                      <img
+                        alt={item.name}
+                        width="123px"
+                        height="164px"
+                        style={{ objectFit: "cover" }}
+                        src={`http://localhost:1337${item.attributes.image.data.attributes.formats.medium.url}`}
+                      />
+                    )}
                   </Box>
                   <Box flex="1 1 60%">
                     <FlexBox mb="5px">
-                      <Typography fontWeight="bold">
-                        {item.name}
-                      </Typography>
+                      <Typography fontWeight="bold">{item.name}</Typography>
                       <IconButton
                         onClick={() =>
                           dispatch(removeFromCart({ id: item.id }))
@@ -90,9 +85,8 @@ const CartMenu = () => {
                         <CloseIcon />
                       </IconButton>
                     </FlexBox>
-                    <Typography>{item.shortDescription}</Typography>
+                    <Typography>{item.attributes?.shortDescription}</Typography>
                     <FlexBox m="15px 0">
-                      {/* Botões de + e - */}
                       <Box
                         display="flex"
                         alignItems="center"
@@ -125,7 +119,7 @@ const CartMenu = () => {
             ))}
           </Box>
 
-          {/* ACTIONS */}
+          {/* SUBTOTAL E CHECKOUT */}
           <Box m="20px 0">
             <FlexBox m="20px 0">
               <Typography fontWeight="bold">SUBTOTAL</Typography>
