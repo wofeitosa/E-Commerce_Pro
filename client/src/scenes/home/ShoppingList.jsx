@@ -7,7 +7,7 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 
 const ShoppingList = () => {
   const dispatch = useDispatch();
-  const items = useSelector((state) => state.cart.items || []);
+  const items = useSelector((state) => state.cart.items);
   const [value, setValue] = useState("all");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -18,7 +18,7 @@ const ShoppingList = () => {
     setError(null);
     try {
       const response = await fetch(
-        "http://localhost:1337/api/items?populate[image][fields][0]=url&populate[image][fields][1]=formats",
+        "http://localhost:1337/api/items?populate=*",
         {
           method: "GET",
           headers: {
@@ -32,8 +32,36 @@ const ShoppingList = () => {
       }
       
       const data = await response.json();
-      console.log('Dados recebidos do Strapi:', data);
-      dispatch(setItems(data.data));
+      
+      if (!data?.data || !Array.isArray(data.data)) {
+        console.error("Formato de dados inválido:", data);
+        throw new Error("Formato de dados inválido recebido do servidor");
+      }
+
+      // Convertendo os dados para o formato esperado
+      const validItems = data.data.map(item => {
+        // Verifica se o item tem os campos necessários
+        if (!item?.id || !item?.name) {
+          console.error("Item sem dados obrigatórios:", item);
+          return null;
+        }
+        
+        // Converte o item para o formato esperado pelo componente
+        return {
+          id: item.id,
+          attributes: {
+            name: item.name,
+            price: item.price || 0,
+            category: item.category,
+            shortDescription: item.shortDescription,
+            longDescription: item.longDescription,
+            image: item.image
+          }
+        };
+      }).filter(Boolean);
+
+      console.log('Items processados:', validItems);
+      dispatch(setItems(validItems));
     } catch (err) {
       console.error("Error fetching items:", err);
       setError(err.message);
@@ -47,7 +75,7 @@ const ShoppingList = () => {
   }, [fetchItems]);
 
   const filterItemsByCategory = (category) => {
-    if (!items) return [];
+    if (!items || !Array.isArray(items)) return [];
     if (category === "all") return items;
     return items.filter((item) => item?.attributes?.category === category);
   };
@@ -68,11 +96,26 @@ const ShoppingList = () => {
       
       {error && (
         <Box display="flex" justifyContent="center" margin="20px">
-          <Alert severity="error">{error}</Alert>
+          <Alert severity="error">
+            {error}
+            <br />
+            Please make sure Strapi is running and permissions are set correctly.
+          </Alert>
         </Box>
       )}
 
-      {!loading && !error && (
+      {!loading && !error && (!filteredItems || filteredItems.length === 0) && (
+        <Alert severity="info">
+          No items found. Please make sure you have:
+          <ul>
+            <li>Added items in the Strapi admin panel</li>
+            <li>Published the items (they should not be in draft state)</li>
+            <li>Set correct permissions in Strapi (Public role should have access to find items)</li>
+          </ul>
+        </Alert>
+      )}
+
+      {!loading && !error && filteredItems && filteredItems.length > 0 && (
         <>
           <Tabs
             value={value}

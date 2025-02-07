@@ -25,13 +25,13 @@ const CartMenu = () => {
   const cart = useSelector((state) => state.cart.cart);
   const isCartOpen = useSelector((state) => state.cart.isCartOpen);
 
-  // Se o price vem diretamente de item
-  const totalPrice = cart.reduce((acc, item) => {
-    const itemPrice = item.price || 0;
-    return acc + item.count * itemPrice;
+  const totalPrice = cart.reduce((total, item) => {
+    if (!item?.attributes?.price) return total;
+    return total + (item.attributes.price * (item.count || 1));
   }, 0);
 
   return (
+    // Overlay
     <Box
       display={isCartOpen ? "block" : "none"}
       backgroundColor="rgba(0, 0, 0, 0.4)"
@@ -43,6 +43,7 @@ const CartMenu = () => {
       top="0"
       overflow="auto"
     >
+      {/* MODAL */}
       <Box
         position="fixed"
         right="0"
@@ -52,40 +53,59 @@ const CartMenu = () => {
         backgroundColor="white"
       >
         <Box padding="30px" overflow="auto" height="100%">
+          {/* HEADER */}
           <FlexBox mb="15px">
             <Typography variant="h3">SHOPPING BAG ({cart.length})</Typography>
-            <IconButton onClick={() => dispatch(setIsCartOpen({}))}>
+            <IconButton onClick={() => dispatch(setIsCartOpen())}>
               <CloseIcon />
             </IconButton>
           </FlexBox>
 
+          {/* CART LIST */}
           <Box>
-            {cart.map((item) => (
-              <Box key={`${item.id}-${item.name}`}>
-                <FlexBox p="15px 0">
-                  <Box flex="1 1 40%">
-                    {item?.attributes?.image && (
+            {cart.map((item) => {
+              if (!item?.attributes) {
+                console.error("Item inválido no carrinho:", item);
+                return null;
+              }
+
+              const { price, name, image } = item.attributes;
+
+              return (
+                <Box key={`${item.id}-${name}`}>
+                  <FlexBox p="15px 0">
+                    <Box flex="1 1 40%">
                       <img
-                        alt={item.name}
+                        alt={name || "Item"}
                         width="123px"
                         height="164px"
-                        style={{ objectFit: "cover" }}
-                        src={`http://localhost:1337${item.attributes.image.data.attributes.formats.medium.url}`}
-                      />
-                    )}
-                  </Box>
-                  <Box flex="1 1 60%">
-                    <FlexBox mb="5px">
-                      <Typography fontWeight="bold">{item.name}</Typography>
-                      <IconButton
-                        onClick={() =>
-                          dispatch(removeFromCart({ id: item.id }))
+                        src={
+                          image?.url
+                            ? (image.url.startsWith('http')
+                              ? image.url
+                              : `http://localhost:1337${image.url}`)
+                            : "/no-image.png"
                         }
-                      >
-                        <CloseIcon />
+                        style={{ objectFit: "cover" }}
+                      />
+                    </Box>
+                    <Box flex="1 1 60%">
+
+
+                      {/* ITEM NAME */}
+                      <FlexBox mb="5px">
+                        <Typography fontWeight="bold">
+                          {name || "Unnamed Item"}
+                        </Typography>
+                        <IconButton
+                          onClick={() =>
+                            dispatch(removeFromCart({ id: item.id }))
+                          }
+                        >
+                       <CloseIcon />
                       </IconButton>
                     </FlexBox>
-                    <Typography>{item.attributes?.shortDescription}</Typography>
+                    <Typography>{item.attributes.shortDescription}</Typography>
                     <FlexBox m="15px 0">
                       <Box
                         display="flex"
@@ -107,23 +127,28 @@ const CartMenu = () => {
                         >
                           <AddIcon />
                         </IconButton>
-                      </Box>
-                      <Typography fontWeight="bold" ml="15px">
-                        ${item.price}
-                      </Typography>
-                    </FlexBox>
-                  </Box>
-                </FlexBox>
-                <Divider />
-              </Box>
-            ))}
+                      </Box>   
+
+
+                        {/* PRICE */}
+                        <Typography fontWeight="bold">
+                          ${typeof price === 'number' ? (price * (item.count || 1)).toFixed(2) : '0.00'}
+                        </Typography>
+                      </FlexBox>
+                    </Box>
+                  </FlexBox>
+                  <Divider />
+                </Box>
+              );
+            })}
           </Box>
 
-          {/* SUBTOTAL E CHECKOUT */}
+
+          {/* ACTIONS */}
           <Box m="20px 0">
             <FlexBox m="20px 0">
               <Typography fontWeight="bold">SUBTOTAL</Typography>
-              <Typography fontWeight="bold">${totalPrice}</Typography>
+              <Typography fontWeight="bold">${totalPrice.toFixed(2)}</Typography>
             </FlexBox>
             <Button
               sx={{
@@ -133,10 +158,11 @@ const CartMenu = () => {
                 minWidth: "100%",
                 padding: "20px 40px",
                 m: "20px 0",
+                "&:hover": { backgroundColor: shades.primary[300] },
               }}
               onClick={() => {
                 navigate("/checkout");
-                dispatch(setIsCartOpen({}));
+                dispatch(setIsCartOpen());
               }}
             >
               CHECKOUT

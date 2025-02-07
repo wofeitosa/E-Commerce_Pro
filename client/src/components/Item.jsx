@@ -7,40 +7,70 @@ import { shades } from "../theme";
 import { addToCart } from "../state";
 import { useNavigate } from "react-router-dom";
 
-const Item = ({ item }) => {
+const Item = ({ item, width }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [count, setCount] = useState(1);
   const [isHovered, setIsHovered] = useState(false);
-
   const {
     palette: { neutral },
   } = useTheme();
 
-  const { attributes } = item || {};
-  const { category, price, name, image } = attributes || {};
-  
-  // Corrigindo o acesso à URL da imagem
-  const imageUrl = image?.data?.attributes?.formats?.medium?.url || image?.data?.attributes?.url;
+  // Verifica se o item é válido e possui attributes
+  if (!item?.id || !item?.attributes) {
+    console.error("Item inválido:", item);
+    return null;
+  }
 
-  if (!item || !attributes) return null;
+  // Extrai os atributos do item
+  const { name, price, category, image } = item.attributes;
+
+  // Função auxiliar para obter a URL da imagem
+  const getImageUrl = (image) => {
+    if (!image) return null;
+    // Se a imagem for uma string, já é a URL
+    if (typeof image === "string") return image;
+    // Se a imagem vier como objeto com data, tenta acessar a URL dentro de data.attributes
+    if (image.data && image.data.attributes && image.data.attributes.url) {
+      return image.data.attributes.url;
+    }
+    // Caso contrário, tenta acessar diretamente a propriedade url
+    return image.url;
+  };
+
+  const imageUrl = getImageUrl(image);
 
   return (
-    <Box width="100%">
+    <Box width={width}>
       <Box
         position="relative"
         onMouseOver={() => setIsHovered(true)}
         onMouseOut={() => setIsHovered(false)}
       >
-        {imageUrl && (
+        {imageUrl ? (
           <img
             alt={name}
             width="300px"
             height="400px"
-            src={`http://localhost:1337${imageUrl}`}
+            src={
+              imageUrl.startsWith("http")
+                ? imageUrl
+                : `http://localhost:1337${imageUrl}`
+            }
             onClick={() => navigate(`/item/${item.id}`)}
             style={{ cursor: "pointer", objectFit: "cover" }}
           />
+        ) : (
+          <Box
+            width="300px"
+            height="400px"
+            bgcolor={neutral.light}
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+          >
+            <Typography>Nenhuma imagem disponível</Typography>
+          </Box>
         )}
 
         <Box
@@ -49,7 +79,7 @@ const Item = ({ item }) => {
           bottom="10%"
           left="0"
           width="100%"
-          padding="0 5%"
+          padding="0 25% 0 7%"
         >
           <Box display="flex" justifyContent="space-between">
             <Box
@@ -66,16 +96,15 @@ const Item = ({ item }) => {
                 <AddIcon />
               </IconButton>
             </Box>
-
             <Button
               onClick={() => dispatch(addToCart({ item: { ...item, count } }))}
-              sx={{ 
-                backgroundColor: shades.primary[300], 
+              sx={{
+                backgroundColor: shades.primary[300],
                 color: "white",
-                "&:hover": { backgroundColor: shades.primary[400] }
+                "&:hover": { backgroundColor: shades.primary[400] },
               }}
             >
-              Add to Cart
+              ADD TO CART
             </Button>
           </Box>
         </Box>
@@ -83,13 +112,16 @@ const Item = ({ item }) => {
 
       <Box mt="3px">
         <Typography variant="subtitle2" color={neutral.dark}>
-          {category?.replace(/([A-Z])/g, " $1")?.replace(/^./, (str) => str.toUpperCase())}
+          {category?.replace(/([A-Z])/g, " $1")?.replace(/^./, (str) => str.toUpperCase()) ||
+            "Sem categoria"}
         </Typography>
-        <Typography>{name}</Typography>
-        <Typography fontWeight="bold">${price?.toFixed(2)}</Typography>
+        <Typography>{name || "Produto sem nome"}</Typography>
+        <Typography fontWeight="bold">
+          ${typeof price === "number" ? price.toFixed(2) : "0.00"}
+        </Typography>
       </Box>
     </Box>
   );
 };
 
-export default Item; 
+export default Item;
